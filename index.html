@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Socials overlay</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* ===== EDIT THESE ===== */
+  :root {
+    --kick: #53fc18;       /* Kick green */
+    --bg: #0b0e0f;        /* pill background */
+    --text: #ffffff;
+    --margin-left: 32px;   /* distance from left edge of the camera */
+    --margin-bottom: 32px; /* distance from bottom edge of the camera */
+  }
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+
+  .wrap {
+    position: fixed;
+    left: var(--margin-left);
+    bottom: var(--margin-bottom);
+    transform-origin: left bottom;
+    transform: translateX(calc(-100% - var(--margin-left) - 40px));
+    opacity: 0;
+    will-change: transform, opacity;   /* own GPU layer: moving it needs no repaint */
+    backface-visibility: hidden;
+  }
+  .wrap.in  { animation: slide-in  .7s cubic-bezier(.2,.9,.25,1) forwards; }
+  .wrap.out { animation: slide-out .55s cubic-bezier(.6,0,.8,.3) forwards; }
+
+  @keyframes slide-in {
+    from { transform: translateX(calc(-100% - var(--margin-left) - 40px)); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slide-out {
+    from { transform: translateX(0); opacity: 1; }
+    to   { transform: translateX(calc(-100% - var(--margin-left) - 40px)); opacity: 0; }
+  }
+
+  .pill {
+    display: flex;
+    align-items: stretch;
+    height: 52px;
+    background: var(--bg);
+    border-radius: 10px;
+    position: relative;
+    box-shadow: 0 6px 20px rgba(0,0,0,.45);
+    will-change: transform;
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  .pill { transform-origin: left center; }
+  /* glow is drawn once on its own layer; the pulse only fades it (opacity) and scales the pill (transform),
+     so nothing is repainted per frame - this is what keeps it smooth in TikTok LIVE Studio */
+  .pill::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1;
+    box-shadow: calc(var(--o) * -1) 0 28px var(--c1), 0 0 30px var(--c2), var(--o) 0 28px var(--c3);
+    opacity: 0; will-change: opacity;
+  }
+  .pill.pulse { animation: pulse .6s ease-in-out; }
+  .pill.pulse::before { animation: glow .6s ease-in-out; }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    45%      { transform: scale(1.09); }
+  }
+  @keyframes glow {
+    0%, 100% { opacity: 0; }
+    45%      { opacity: 1; }
+  }
+  /* pulse colour per icon: --c1..--c3 are glow colours, --o spreads them left/right (fade) */
+  .pill { --o: 0px; --c1: rgba(255,255,255,.5); --c2: rgba(255,255,255,.5); --c3: rgba(255,255,255,.5); }
+  .pill[data-icon="kick"] { --c1: rgba(83,252,24,.6);  --c2: rgba(83,252,24,.6);  --c3: rgba(83,252,24,.6); }
+  .pill[data-icon="yt"]   { --c1: rgba(255,0,0,.6);    --c2: rgba(255,0,0,.6);    --c3: rgba(255,0,0,.6); }
+  .pill[data-icon="tt"]   { --c1: rgba(255,255,255,.55); --c2: rgba(255,255,255,.55); --c3: rgba(255,255,255,.55); }
+  .pill[data-icon="ig"]   { --o: 12px; --c1: rgba(250,126,30,.65); --c2: rgba(214,41,118,.65); --c3: rgba(79,91,213,.65); }
+  .pill[data-icon="web"]  { --c1: rgba(59,156,255,.7); --c2: rgba(59,156,255,.7); --c3: rgba(59,156,255,.7); }
+  .mark { width: 52px; display: grid; place-items: center; }
+  .mark svg { display: none; height: 30px; width: auto; }
+  .mark svg.kick { fill: var(--kick); margin-left: 6px; }
+  .pill[data-icon="kick"] .mark svg.kick { display: block; }
+  .pill[data-icon="ig"]   .mark svg.ig   { display: block; }
+  .pill[data-icon="yt"]   .mark svg.yt   { display: block; height: 32px; }
+  .pill[data-icon="tt"]   .mark svg.tt   { display: block; }
+  .pill[data-icon="web"]  .mark svg.web  { display: block; height: 30px; }
+
+  .name {
+    display: flex;
+    align-items: center;
+    padding: 0 22px 0 16px;
+    color: var(--text);
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: .2px;
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wrap.in, .wrap.out, .pill.pulse { animation-duration: .01s; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap" id="wrap">
+    <div class="pill" id="pill" data-icon="kick">
+      <div class="mark">
+        <!-- Kick -->
+        <svg class="kick" viewBox="93 72 326 368" xmlns="http://www.w3.org/2000/svg" aria-label="Kick">
+          <polygon points="93,72 215,72 215,154 256,154 256,113 297,113 297,72 419,72 419,195 379,195 379,236 338,236 338,277 379,277 379,318 419,318 419,440 297,440 297,399 256,399 256,358 215,358 215,440 93,440"/>
+        </svg>
+        <!-- Instagram -->
+        <svg class="ig" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="Instagram">
+          <defs>
+            <linearGradient id="igg" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0" stop-color="#feda75"/>
+              <stop offset=".3" stop-color="#fa7e1e"/>
+              <stop offset=".55" stop-color="#d62976"/>
+              <stop offset=".8" stop-color="#962fbf"/>
+              <stop offset="1" stop-color="#4f5bd5"/>
+            </linearGradient>
+          </defs>
+          <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="none" stroke="url(#igg)" stroke-width="2.2"/>
+          <circle cx="12" cy="12" r="4.3" fill="none" stroke="url(#igg)" stroke-width="2.2"/>
+          <circle cx="17.5" cy="6.5" r="1.3" fill="url(#igg)"/>
+        </svg>
+        <!-- YouTube -->
+        <svg class="yt" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="YouTube">
+          <rect x="1" y="4.5" width="22" height="15" rx="4.5" fill="#ff0000"/>
+          <polygon points="9.8,8.8 15.8,12 9.8,15.2" fill="#ffffff"/>
+        </svg>
+        <!-- TikTok -->
+        <svg class="tt" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="TikTok">
+          <defs>
+            <path id="ttn" d="M12.5.02h3.9c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93v8.75c-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72v4.44c-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36z"/>
+          </defs>
+          <use href="#ttn" fill="#25f4ee" transform="translate(-.9 -.7)"/>
+          <use href="#ttn" fill="#fe2c55" transform="translate(.9 .7)"/>
+          <use href="#ttn" fill="#ffffff"/>
+        </svg>
+        <!-- Website -->
+        <svg class="web" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="Strona" fill="none" stroke="#3b9cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="overflow:visible">
+          <defs><filter id="wg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+          <g filter="url(#wg)">
+          <circle cx="12" cy="12" r="9.5"/>
+          <ellipse cx="12" cy="12" rx="4.2" ry="9.5"/>
+          <path d="M2.5 12h19"/>
+          <path d="M4 7.2h16M4 16.8h16" stroke-width="1.6"/>
+          </g>
+        </svg>
+      </div>
+      <div class="name" id="name"></div>
+    </div>
+  </div>
+
+<script>
+  // ===== DEFAULTS (URL params override these) =====
+  // Example: ?kick=kick.com/nick&ig=@nick&hold=2&gap=0&scale=1.2
+  const CONFIG = {
+    kick: "kick.com/lotnikv2",
+    ig:   "@lotnikv2",
+    yt:   "@lotnikkv2",
+    tt:   "@lotnikv2",
+    web:  "lotnikv2.pl",
+    hold: 5.2,  // seconds to stay after the pulse, before hiding (~6.5 s on screen in total)
+    gap: 0,     // extra pause (seconds) between one item hiding and the next appearing
+    scale: 1
+  };
+
+  const p = new URLSearchParams(location.search);
+  const num = (k, d) => parseFloat(p.get(k)) || d;
+  const hold = p.has("hold") ? parseFloat(p.get("hold")) : CONFIG.hold;
+  const gap  = p.has("gap")  ? parseFloat(p.get("gap"))  : CONFIG.gap;
+  const scale = num("scale", CONFIG.scale);
+
+  // order of the rotation: Kick, then Instagram, then back to Kick...
+  const items = [
+    { icon: "kick", text: p.get("kick") || CONFIG.kick },
+    { icon: "ig",   text: p.get("ig")   || CONFIG.ig },
+    { icon: "yt",   text: p.get("yt")   || CONFIG.yt },
+    { icon: "tt",   text: p.get("tt")   || CONFIG.tt },
+    { icon: "web",  text: p.get("web")  || CONFIG.web }
+  ];
+
+  const wrap = document.getElementById("wrap");
+  const pill = document.getElementById("pill");
+  const nameEl = document.getElementById("name");
+  wrap.style.scale = scale;
+
+  const SLIDE_IN = 700, PULSE = 600, SLIDE_OUT = 550; // ms, match the CSS
+
+  let i = 0;
+  function slideIn() {
+    const it = items[i];
+    pill.dataset.icon = it.icon;      // swapped while off-screen
+    nameEl.textContent = it.text;
+    wrap.classList.remove("out");
+    wrap.classList.add("in");
+    // pulse once right after sliding in
+    setTimeout(() => {
+      pill.classList.remove("pulse");
+      void pill.offsetWidth;          // restart animation
+      pill.classList.add("pulse");
+    }, SLIDE_IN);
+    // then start hiding
+    setTimeout(slideOut, SLIDE_IN + PULSE + hold * 1000);
+  }
+  function slideOut() {
+    pill.classList.remove("pulse");
+    wrap.classList.remove("in");
+    wrap.classList.add("out");
+    i = (i + 1) % items.length;
+    // next one appears as soon as this one is gone
+    setTimeout(slideIn, SLIDE_OUT + gap * 1000);
+  }
+
+  setTimeout(slideIn, 800);
+</script>
+</body>
+</html>
